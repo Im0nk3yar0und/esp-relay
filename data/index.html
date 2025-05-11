@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ESP8266 Terminal</title>
+  <style>
+    :root {
+      /* Gruvbox color scheme */
+      --bg-color: #282828;        /* dark background */
+      --text-color: #ebdbb2;      /* light foreground */
+      --accent-color: #98971a;    /* green */
+      --input-bg: #3c3836;        /* darker background */
+      --border-color: #665c54;    /* gray */
+      --button-disabled: #7c6f64; /* disabled gray */
+      --panel-bg: #1d2021;        /* darkest background */
+      --prompt-color: #d79921;    /* yellow */
+      --error-color: #cc241d;     /* red */
+      --font-size: 13px;          /* Base font size - changed from 14px */
+      
+	  /* ... existing variables ... */
+	  --warning-color: #d65d0e;   /* Gruvbox basic orange */
+	  --warning-hover: #fe8019;   /* Groovebox lighter orange */
+	  --panel-bg: #1d2021;        /* Dark background for contrast */
+    }
+    
+    body {
+      font-family: 'Ubuntu Mono', 'Courier New', monospace;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      margin: 0;
+      padding: 0;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      /* text-transform: lowercase;    /* Force lowercase */
+    }
+    
+    .header {
+      background-color: var(--panel-bg);
+      padding: 5px 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border-color);
+    }
+    
+	.title {
+	  color: #d65d0e;
+	  /* Or use another Gruvbox color: */
+	  /* color: #d65d0e; */ /* Gruvbox orange */
+	  /* color: #b8bb26; */ /* Gruvbox light green */
+	  font-size: 0.9rem;
+	}
+    
+    .controls {
+      display: flex;
+      gap: 8px;                        /* Reduced from 10px */
+    }
+    
+	.control-btn {
+	  background: var(--input-bg);
+	  color: var(--text-color);
+	  border: none;
+	  border-radius: 3px;
+	  width: 22px;
+	  height: 22px;
+	  display: flex;
+	  align-items: center;
+	  justify-content: center;
+	  cursor: pointer;
+	  font-size: 0.8rem;
+	  transition: all 0.2s ease;
+	}
+
+	.control-btn:hover {
+	  background-color: var(--warning-hover) !important;
+	  color: var(--panel-bg) !important;
+	}
+
+	.control-btn:active {
+	  background-color: var(--warning-color) !important;
+	  color: var(--panel-bg) !important;
+	  transform: translateY(1px);
+	}
+
+	.control-btn:focus {
+	  outline: none;
+	  box-shadow: 0 0 0 2px var(--warning-color);
+	}
+
+	/* If you want the buttons to be orange even when they are focused (tab navigation) */
+	.control-btn:focus {
+	  outline: none;
+	  box-shadow: 0 0 0 2px var(--warning-color);
+	}
+
+
+    .container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 8px;                    	/* Reduced from 10px */
+      overflow: hidden;
+      margin: 40px; 					/* Space around the container */
+      
+    }
+    
+    .panel-container {
+      display: flex;
+      gap: 12px;                       /* Reduced from 15px */
+      height: 100%;
+      min-height: 0;
+    }
+    
+    .panel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background-color: var(--panel-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 3px;              /* Reduced from 4px */
+      overflow: hidden;
+      min-height: 0;
+    }
+    
+    .panel-header {
+      background-color: var(--panel-bg);
+      padding: 4px 8px;                /* Reduced from 5px 10px */
+      font-size: 0.8rem;
+      font-weight: normal;             /* Changed from bold */
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+    }
+    
+    .panel-title {
+      color: var(--accent-color);
+    }
+    
+    /* Panel size adjustments */
+    #input-panel {
+      flex: 0.35;                    /* Reduced from 0.4 */
+      min-width: 280px;              /* Reduced from 300px */
+    }
+    
+    #output-panel {
+      flex: 0.65;                    /* Reduced from 0.6 */
+    }
+    
+    #command-history {
+      flex-grow: 1;
+      background-color: var(--panel-bg);
+      color: var(--text-color);
+      border: none;
+      padding: 8px;                   /* Reduced from 10px */
+      font-family: inherit;
+      font-size: var(--font-size);
+      resize: none;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      margin: 0;
+      line-height: 1.3;
+    }
+    
+    #terminal {
+      flex-grow: 1;
+      background-color: var(--panel-bg);
+      color: var(--text-color);
+      border: none;
+      padding: 8px;                    /* Reduced from 10px */
+      font-family: inherit;
+      font-size: var(--font-size);
+      resize: none;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      margin: 0;
+      line-height: 1.3;
+    }
+    
+    .input-group {
+      display: flex;
+      gap: 6px;                       /* Reduced from 8px */
+      padding: 6px;                   /* Reduced from 8px */
+      border-top: 1px solid var(--border-color);
+      align-items: center;
+    }
+    
+    .prompt {
+      color: var(--prompt-color);
+      white-space: nowrap;
+    }
+    
+    #input {
+      flex-grow: 1;
+      background-color: var(--input-bg);
+      color: var(--text-color);
+      border: 1px solid var(--border-color);
+      border-radius: 3px;
+      padding: 6px;                    /* Reduced from 8px */
+      font-family: inherit;
+      font-size: var(--font-size);
+      /* text-transform: lowercase; */
+    }
+    
+    button {
+      background-color: var(--accent-color);
+      color: var(--panel-bg);
+      border: none;
+      border-radius: 3px;
+      padding: 6px 12px;               /* Reduced from 8px 15px */
+      cursor: pointer;
+      font-family: inherit;
+      font-weight: normal;             /* Changed from bold */
+      font-size: 0.8rem;
+      /* text-transform: lowercase; */
+    }
+    
+    button:hover:not(:disabled) {
+      background-color: #b8bb26;       /* Slightly lighter green */
+    }
+    
+    button:disabled {
+      background-color: var(--button-disabled);
+      cursor: not-allowed;
+    }
+    
+    .error {
+      color: var(--error-color);
+    }
+    
+    .command-entry {
+      color: var(--prompt-color);
+    }
+    
+    .response-entry {
+      margin-bottom: 4px; 				/* Reduced from 5px */
+    }
+    
+    @media (max-width: 768px) {
+      .panel-container {
+        flex-direction: column;
+      }
+      #input-panel, #output-panel {
+        flex: 1;
+        min-width: auto;
+      }
+    }
+    
+	#clear-input, #clear-output, #clear-history {
+	  background-color: var(--border-color);
+	  color: var(--text-color);
+	  transition: all 0.2s ease;
+	}
+
+	/* Active (pressed) state */
+	#clear-input:active, #clear-output:active, #clear-history:active {
+	  background-color: var(--warning-color);
+	  color: var(--panel-bg);
+	}
+
+	/* Hover state */
+	#clear-input:hover, #clear-output:hover, #clear-history:hover {
+	  background-color: var(--warning-hover);
+	  color: var(--panel-bg);
+	}
+
+	/* Specific styles for each clear button */
+	#clear-input {
+	  padding: 6px 10px;
+	}
+
+	#clear-output, #clear-history {
+	  font-size: 0.7rem;
+	  padding: 2px 8px;
+	  margin-left: auto;
+	}
+
+    /* Remove default focus outlines and add Gruvbox orange */
+    #input:focus,
+    #terminal:focus,
+    #history-search:focus,
+    #command-history:focus {
+      outline: none;
+      box-shadow: 0 0 0 2px var(--focus-color);
+      border-color: var(--focus-color);
+    }
+
+    /* Style for input field */
+    #input {
+      background-color: var(--input-bg);
+      color: var(--text-color);
+      border: 1px solid var(--border-color);
+      border-radius: 3px;
+      padding: 8px;
+      font-family: inherit;
+      font-size: var(--font-size);
+      transition: all 0.2s ease;
+    }
+
+
+
+    /* Style for terminal and command history */
+    #terminal,
+    #command-history {
+      background-color: var(--panel-bg);
+      color: var(--text-color);
+      border: 1px solid var(--border-color);
+      border-radius: 3px;
+      padding: 8px;
+      font-family: inherit;
+      font-size: var(--font-size);
+      transition: all 0.2s ease;
+    }
+
+	#command-history-popup {
+		font-family: monospace;
+		font-size: var(--font-size);
+	}
+
+	.history-item:hover {
+		background-color: #333;
+	}
+	
+	#history-search {
+		background-color: var(--input-bg);
+		color: var(--text-color);
+		border: 1px solid var(--border-color);
+		border-radius: 3px;
+		padding: 8px;
+		font-family: inherit;
+		font-size: var(--font-size);
+		transition: all 0.2s ease;
+	}
+
+
+
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="title">ESP8266 Terminal</div>
+    <div class="controls">
+      <button class="control-btn" id="font-decrease" title="decrease font size">-</button>
+      <button class="control-btn" id="font-increase" title="increase font size">+</button>
+      <button class="control-btn" id="fullscreen-btn" title="toggle fullscreen">⛶</button>
+    </div>
+  </div>
+  
+  <div class="container">
+    <div class="panel-container">
+      <div class="panel" id="input-panel">
+        <div class="panel-header">
+          <div class="panel-title">Command history</div>
+          <button id="clear-output" onclick="clearHistory()">clear</button>
+        </div>
+        <textarea id="command-history" readonly></textarea>
+		<div class="input-group">
+		  <div class="prompt">$</div>
+		  <input id="input" type="text" placeholder="enter command..." autocomplete="off">
+		  <button id="send-button" onclick="sendCommand()">send</button>
+		  <button id="clear-input" onclick="clearHistory()">clear</button>
+		</div>
+      </div>
+      
+		<div class="panel" id="output-panel">
+		  <div class="panel-header">
+			<div class="panel-title">Output</div>
+			
+			<button id="clear-output" onclick="clearTerminal()">clear</button>
+		  </div>
+		  <textarea id="terminal" readonly></textarea>
+		</div>
+    </div>
+  </div>
+
+  <script>
+// Make terminal focusable
+document.getElementById('terminal').tabIndex = 0;
+document.getElementById('command-history').tabIndex = 0;
+
+const terminal = document.getElementById('terminal');
+const commandHistory = document.getElementById('command-history');
+const input = document.getElementById('input');
+const sendButton = document.getElementById('send-button');
+
+const fontDecrease = document.getElementById('font-decrease');
+const fontIncrease = document.getElementById('font-increase');
+const fullscreenBtn = document.getElementById('fullscreen-btn');
+
+let isSending = false;
+let lastCommandTime = 0;
+let responseTimer = null;
+let fontSize = 12; 							/* Reduced from 14 */
+
+// Add these variables to the beginning of the script
+let commandHistoryIndex = -1;
+let commandHistoryList = [];
+let originalInputValue = '';
+
+// Add this code to the window.onload function
+input.addEventListener('keydown', function(e) {
+	// Ctrl+R for command history
+	if (e.shiftKey && e.key === 'r') {
+	    e.preventDefault();
+	    showCommandHistoryPopup();
+	}
+	// Up arrow for previous command
+	else if (e.key === 'ArrowUp') {
+	    if (commandHistoryIndex < commandHistoryList.length - 1) {
+	        if (commandHistoryIndex === -1) {
+	            originalInputValue = input.value;
+	        }
+	        commandHistoryIndex++;
+	        input.value = commandHistoryList[commandHistoryList.length - 1 - commandHistoryIndex];
+	    }
+	    e.preventDefault();
+	}
+	// Down arrow for next command
+	else if (e.key === 'ArrowDown') {
+	    if (commandHistoryIndex > 0) {
+	        commandHistoryIndex--;
+	        input.value = commandHistoryList[commandHistoryList.length - 1 - commandHistoryIndex];
+	    } else if (commandHistoryIndex === 0) {
+	        commandHistoryIndex = -1;
+	        input.value = originalInputValue;
+	    }
+	    e.preventDefault();
+	}
+});
+
+
+
+
+// Set initial font size
+document.documentElement.style.setProperty('--font-size', fontSize + 'px');
+
+// Font size controls
+fontDecrease.addEventListener('click', () => {
+  if (fontSize > 10) {
+    fontSize--;
+    document.documentElement.style.setProperty('--font-size', fontSize + 'px');
+  }
+});
+
+fontIncrease.addEventListener('click', () => {
+  if (fontSize < 20) { 							/* Reduced from 24 */
+    fontSize++;
+    document.documentElement.style.setProperty('--font-size', fontSize + 'px');
+  }
+});
+
+
+
+
+// Fullscreen toggle
+fullscreenBtn.addEventListener('click', toggleFullscreen);
+
+function toggleFullscreen() {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen().catch(err => {
+      console.error(`error attempting to enable fullscreen: ${err.message}`);
+    });
+  } else {
+    if (document.exitFullscreen) {
+      document.exitFullscreen();
+    }
+  }
+}
+
+
+
+
+function sendCommand() {
+  const cmd = input.value.trim();
+  if (!cmd || isSending) return;
+
+  isSending = true;
+  sendButton.disabled = true;
+
+  if (commandHistoryList.length === 0 || commandHistoryList[commandHistoryList.length - 1] !== cmd) {
+    commandHistoryList.push(cmd);
+    if (commandHistoryList.length > 100) {
+      commandHistoryList.shift();
+    }
+  }
+
+  commandHistoryIndex = -1;
+  commandHistory.value += `$ ${cmd}\n`;
+  commandHistory.scrollTop = commandHistory.scrollHeight;
+  input.value = '';
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 5000);
+
+  if (cmd == "cls" || cmd == "clearscreen") {
+  	clearTerminal();
+  	isSending = false;
+    sendButton.disabled = false;
+	return;
+  }
+  
+  fetch(`http://${window.location.hostname}/send?cmd=${encodeURIComponent(cmd)}`, {
+    method: 'GET',
+    signal: controller.signal
+  })
+    .then(response => {
+      clearTimeout(timeout);
+      if (!response.ok) throw new Error(`HTTP error: ${response.status}`);
+      return response.json();
+    })
+    .then(data => {
+      if (data.response) {
+        terminal.value += '\n' + data.response + '\n';
+        startOutputPolling();  // Počni proveru /output
+      } else {
+        terminal.value += "Error: Unexpected response from server.\n";
+        isSending = false;
+        sendButton.disabled = false;
+      }
+    })
+    .catch(error => {
+      if (error.name === 'AbortError') {
+        terminal.value += "Error: No response from ESP device (timeout).\n";
+      } else {
+        terminal.value += `Error sending command: ${error.message}\n`;
+      }
+      console.error('Fetch error:', error);
+      isSending = false;
+      sendButton.disabled = false;
+    })
+    .finally(() => {
+      input.focus();
+      terminal.scrollTop = terminal.scrollHeight;
+    });
+}
+
+// Nova funkcija za proveru /output
+function startOutputPolling() {
+  let attempts = 0;
+  const maxAttempts = 10;
+
+  const interval = setInterval(() => {
+    fetch(`http://${window.location.hostname}/output`)
+      .then(response => {
+        if (!response.ok) throw new Error(`HTTP error: ${responsez.status}`);
+        return response.json();
+      })
+      .then(data => {
+        const result = data.response;
+        if (result && result.trim() !== "") {
+          clearTerminal();
+          terminal.value += `${result}\n`;
+          const responseField = document.getElementById('response');
+          if (responseField) responseField.value = result;
+
+          clearInterval(interval);
+          isSending = false;
+          sendButton.disabled = false;
+        } else {
+          attempts++;
+          if (attempts >= maxAttempts) {
+            terminal.value += "Error: No valid response within the time limit.\n";
+            clearInterval(interval);
+            isSending = false;
+            sendButton.disabled = false;
+          }
+        }
+      })
+      .catch(error => {
+        terminal.value += `Error reading output: ${error.message}\n`;
+        clearInterval(interval);
+        isSending = false;
+        sendButton.disabled = false;
+      });
+  }, 1000); // try every 1 second
+}
+
+
+    
+
+function showCommandHistoryPopup() {
+    // Create popup if it doesn't exist
+    let popup = document.getElementById('command-history-popup');
+    if (!popup) {
+        popup = document.createElement('div');
+        popup.id = 'command-history-popup';
+        popup.style.position = 'fixed';
+        popup.style.top = '50%';
+        popup.style.left = '50%';
+        popup.style.transform = 'translate(-50%, -50%)';
+        popup.style.backgroundColor = '#1e1e1e';
+        popup.style.border = '1px solid #444';
+        popup.style.padding = '0';
+        popup.style.zIndex = '1000';
+        popup.style.maxHeight = '70vh';
+        popup.style.overflowY = 'auto';
+        popup.style.width = '80%';
+        popup.style.maxWidth = '600px';
+        popup.style.boxShadow = '0 0 10px rgba(0,0,0,0.5)';
+        popup.style.display = 'flex';
+        popup.style.flexDirection = 'column';
+
+        // Header with title and X button
+        const header = document.createElement('div');
+        header.style.display = 'flex';
+        header.style.justifyContent = 'space-between';
+        header.style.alignItems = 'center';
+        header.style.backgroundColor = '#2d2d2d';
+        header.style.color = '#fff';
+        header.style.padding = '10px';
+        header.style.fontWeight = 'bold';
+        header.style.borderBottom = '1px solid #444';
+
+        const title = document.createElement('div');
+        title.textContent = 'Command History';
+        title.style.color = '#d65d0e';                   // dirty orange (Gruvbox dark yellow/orange)
+
+
+        const closeButton = document.createElement('span');
+        closeButton.textContent = '✖';
+        closeButton.style.cursor = 'pointer';
+        closeButton.style.color = '#aaa';
+        closeButton.title = 'Zatvori';
+        closeButton.addEventListener('click', () => {
+            document.body.removeChild(popup);
+        });
+
+        header.appendChild(title);
+        header.appendChild(closeButton);
+        popup.appendChild(header);
+
+        // Search input
+        const searchInput = document.createElement('input');
+        searchInput.type = 'text';
+        searchInput.id = 'history-search';
+        searchInput.placeholder = 'Search command history...';
+        searchInput.style.width = '100%';
+        searchInput.style.boxSizing = 'border-box';
+        searchInput.style.padding = '8px';
+        searchInput.style.backgroundColor = '#282828'; 				// dark background
+        //searchInput.style.color = '#fff';
+        searchInput.style.color = '#ebdbb2';           				// bright text
+        popup.appendChild(searchInput);
+
+
+        // Command list
+        const historyList = document.createElement('div');
+        historyList.id = 'history-list';
+        historyList.style.flex = '1';
+        historyList.style.overflowY = 'auto';
+        historyList.style.padding = '10px';
+        popup.appendChild(historyList);
+
+        // Search
+        searchInput.addEventListener('input', function () {
+            updateHistoryList(this.value.toLowerCase());
+        });
+
+        // Clicking outside the popup does nothing (unless you add an overlay)
+        document.body.appendChild(popup);
+
+        // ESC closing
+        const escHandler = function (e) {
+            if (e.key === 'Escape') {
+                document.body.removeChild(popup);
+                document.removeEventListener('keydown', escHandler);
+            }
+        };
+        document.addEventListener('keydown', escHandler);
+    }
+
+    // Focus and enter to search
+    const searchInput = document.getElementById('history-search');
+    if (searchInput) {
+        searchInput.value = '';
+        searchInput.focus();
+        updateHistoryList('');
+
+        searchInput.addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                const firstItem = document.querySelector('#history-list div.history-item');
+                if (firstItem) {
+                    input.value = firstItem.textContent;
+                    const popup = document.getElementById('command-history-popup');
+                    if (popup) document.body.removeChild(popup);
+                    input.focus();
+                }
+            }
+        });
+    }
+}
+
+
+
+
+
+// Feature to update history list based on search
+function updateHistoryList(searchTerm) {
+    const historyList = document.getElementById('history-list');
+    if (!historyList) return;
+    
+    historyList.innerHTML = '';
+    
+    // Filter commands that match your search
+    const filteredCommands = commandHistoryList.filter(cmd => 
+        cmd.toLowerCase().includes(searchTerm)
+    ).reverse();
+    
+    // Add commands to the list
+    filteredCommands.forEach(cmd => {
+        const item = document.createElement('div');
+        item.className = 'history-item';
+        item.textContent = cmd;
+        item.style.padding = '5px';
+        item.style.cursor = 'pointer';
+        item.style.borderBottom = '1px solid #444';
+        
+        // Highlight the part of the text that matches the search
+        if (searchTerm) {
+            const index = cmd.toLowerCase().indexOf(searchTerm);
+            if (index >= 0) {
+                const before = cmd.substring(0, index);
+                const match = cmd.substring(index, index + searchTerm.length);
+                const after = cmd.substring(index + searchTerm.length);
+                
+                item.innerHTML = `${before}<span style="background-color: #555;">${match}</span>${after}`;
+            }
+        }
+        
+        // Clicking on a command places it in the input and closes the popup
+        item.addEventListener('click', function() {
+            input.value = cmd;
+            document.body.removeChild(document.getElementById('command-history-popup'));
+            input.focus();
+        });
+        
+        historyList.appendChild(item);
+    });
+    
+    // If there are no results, display a message
+    if (filteredCommands.length === 0) {
+        const noResults = document.createElement('div');
+        noResults.textContent = 'No results';
+        noResults.style.padding = '5px';
+        noResults.style.color = '#888';
+        historyList.appendChild(noResults);
+    }
+}
+
+    
+
+
+// Initialize when page loads
+window.onload = function() {
+
+    
+    // Enable command sending with Enter key
+    input.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            // Check if there is a history popup
+            if (!document.getElementById('command-history-popup')) {
+                e.preventDefault(); 									// Prevents the default behavior of the Enter key
+                sendCommand();
+            }
+        }
+    });
+    
+    // Focus on input field automatically
+    input.focus();
+    
+    // Make the layout responsive
+    window.addEventListener('resize', adjustLayout);
+    adjustLayout();
+};
+
+
+
+function clearHistory() {
+  commandHistory.value = '';
+}
+
+
+
+function clearTerminal() {
+  terminal.value = '';
+}
+	
+(function showClock() {
+    const clock = document.createElement('div');
+    clock.id = 'gruvbox-clock';
+    clock.style.position = 'fixed';
+    clock.style.bottom = '10px';
+    clock.style.right = '45px';
+    clock.style.padding = '6px 12px';
+    clock.style.backgroundColor = '#282828';   // Gruvbox dark
+    clock.style.color = '#d65d0e';             // Gruvbox yellow
+    clock.style.fontFamily = 'monospace';
+    clock.style.fontSize = '14px';
+    clock.style.border = '1px solid #d65d0e';  // Gruvbox orange-ish
+    clock.style.borderRadius = '6px';
+    clock.style.boxShadow = '0 0 5px rgba(0, 0, 0, 0.5)';
+    clock.style.zIndex = '9999';
+    clock.style.opacity = '0.9';
+
+    document.body.appendChild(clock);
+
+    function updateClock() {
+        const now = new Date();
+        const timeString = now.toLocaleTimeString('sr-RS', {
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
+        });
+        clock.textContent = timeString;
+    }
+
+    updateClock();
+    setInterval(updateClock, 1000);
+})();
+	
+  </script>
+</body>
+</html>
