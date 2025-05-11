@@ -340,7 +340,7 @@ This project demonstrates how to combine GSM and Wi-Fi tech in a secure offline-
 
 ---
 ## License
-- This project is licensed under the MIT License. See the [LICENSE](https://github.com/Im0nk3yar0und/esp-webshell/blob/main/LICENSE) file for details.
+- This project is licensed under the MIT License. See the [LICENSE](https://github.com/Im0nk3yar0und/esp-relay/blob/main/LICENSE) file for details.
 
 &nbsp;
 
