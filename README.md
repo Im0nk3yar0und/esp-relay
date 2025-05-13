@@ -269,7 +269,7 @@ To upload the `data` folder to the ESP-07's filesystem:
 
 &nbsp;
 #### Upload Files
-1. Use the command above to upload the `data` folder contents to SPIFFS.
+1. Use the command above to upload the `data` folder contents to LittleFS.
 
 &nbsp;
 
