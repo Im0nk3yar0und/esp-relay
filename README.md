@@ -127,8 +127,8 @@ If you're using a **single 4V power source** (e.g., Li-Ion battery), you can saf
          ___     |       |                           |                LED
   1N4007 / \     | Relay |        Relay Coil         |                 |
          ---     |       |                           |                .-.
-   Anode  |      |       |     COM2    NO2     NC2   |                | |
-          |      '-------'---------------------------'                | | 220Ω
+   Anode  |      |       |     COM2    NO2     NC2   |                | | 220Ω
+          |      '-------'---------------------------'                | |
           |          |                                                '-'
           +----------|                                                 |
                      |                                                GND
@@ -140,11 +140,6 @@ ESP GPIO12----------|   2N2222
                      | (E) Emitter
                      |
                      |
-                     |
-                    .-.
-                    | | 10KΩ Pull-down
-                    | |
-                    '-'
                      |
                     GND
 
@@ -168,7 +163,7 @@ Flyback Diode (1N4007)
 - SIM800 GSM Module
 - 2N2222 NPN Transistor
 - 1N4007 Diodes (Flyback protection)
-- 220Ω, 1kΩ & 10kΩ Resistors
+- 220Ω & 1kΩ Resistors
 - Relay Module (or standalone relay)
 - 3.7V–4.2V Li-Ion Battery (External power for GSM)
 
@@ -300,7 +295,7 @@ The ESP-07 operates in **dual mode**:
 Predefined fallback network (change if needed):
 ```cpp
 #define AP_SSID "ESP8266-Access-Point"  // Default AP SSID
-#define AP_PASS "123456789"              // Default AP password
+#define AP_PASS "123456789"             // Default AP password
 ```
 Devices can connect to this network to access the ESP-07’s web interface at `http://192.168.1.1`.
 
