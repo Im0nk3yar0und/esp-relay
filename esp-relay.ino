@@ -174,7 +174,7 @@ const unsigned long CHECK_INTERVAL = 60000; // 1 minute in milliseconds
 */
 #define SIM800_TX_PIN 4
 #define SIM800_RX_PIN 5
-#define RELAY_PIN 14            // Relay connected to GPIO12
+#define RELAY_PIN 12            // Relay connected to GPIO12
 
 // Create SoftwareSerial object for SIM800 communication
 SoftwareSerial serialSIM800(SIM800_RX_PIN, SIM800_TX_PIN);
@@ -266,13 +266,20 @@ void setup() {
 
     // Start serial communication with the SIM800 module
     // serialSIM800.begin(115200);                        // TEMPORARILY use this to send AT+IPR=9600
-    // delay(1000);
-    serialSIM800.begin(9600);
-    delay(1000);
-
-    serialSIM800.println("AT+IPR=9600");                // Sets SIM800 to 9600 baud permanently
-    delay(1000);
+    // delay(100);
+    // serialSIM800.println("AT+IPR=9600");
+    // delay(100);
+    // serialSIM800.println("AT&W");                      // Save settings
+    // delay(100);
     // NOTE: After this step, restart SIM800 manually or via AT+CFUN=1,1
+
+
+    serialSIM800.begin(9600);
+    delay(100);
+    serialSIM800.println("AT+IPR=9600");
+    delay(100);
+    serialSIM800.println("AT&W");
+    delay(100);
 
 
 
