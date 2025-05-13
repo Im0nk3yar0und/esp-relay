@@ -248,7 +248,7 @@ After installation, restart the IDE to apply changes.
 ## 2. Flashing the ESP-07
 
 ### Uploading the Sketch
-1. Open `sketch_esp07.ino` in Arduino IDE.
+1. Open `sim800.ino` in Arduino IDE.
 2. Place the `data` folder (containing HTML/scripts) in the same directory as the sketch.
 3. Connect the ESP-07 via an **ESP8266Burn debugger**.
 4. Select the correct **ESP8266 board** and **COM port** in the IDE.
